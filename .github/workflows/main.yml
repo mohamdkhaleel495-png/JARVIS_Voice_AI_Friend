@@ -14,6 +14,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # Java setup add kiya gaya hai (Flutter 3.24 ke liye Java 17 recommended hai)
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -56,3 +63,4 @@ jobs:
           name: JARVIS-APK
           path: ${{ env.PROJECT_DIR }}/build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
+
