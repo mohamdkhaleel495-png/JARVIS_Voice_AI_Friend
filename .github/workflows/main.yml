@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Flutter
@@ -21,17 +21,38 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Flutter Doctor
-        run: flutter doctor -v
+      - name: Find Flutter Project
+        shell: bash
+        run: |
+          echo "Searching for pubspec.yaml..."
+          PROJECT_DIR=$(find . -name pubspec.yaml -not -path './.git/*' -printf '%h\n' | head -n 1)
 
-      - name: Get Dependencies
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "ERROR: pubspec.yaml not found!"
+            echo "Repository files:"
+            find . -maxdepth 4 -type f | sort
+            exit 1
+          fi
+
+          echo "Flutter project found at: $PROJECT_DIR"
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+
+      - name: Show Project Files
+        run: |
+          echo "Project directory: $PROJECT_DIR"
+          ls -la "$PROJECT_DIR"
+
+      - name: Get Flutter Dependencies
+        working-directory: ${{ env.PROJECT_DIR }}
         run: flutter pub get
 
-      - name: Build APK
+      - name: Build Release APK
+        working-directory: ${{ env.PROJECT_DIR }}
         run: flutter build apk --release
 
       - name: Upload JARVIS APK
         uses: actions/upload-artifact@v4
         with:
           name: JARVIS-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: ${{ env.PROJECT_DIR }}/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
